@@ -112,10 +112,10 @@ class EmailQueueTable extends Table
         return $this->getConnection()->transactional(function () use ($size) {
             $emails = $this->find()
                 ->where([
-                    $this->aliasField('sent') => false,
+                    $this->aliasField('sent') => 0,
                     $this->aliasField('send_tries') . ' <=' => 3,
                     $this->aliasField('send_at') . ' <=' => new FrozenTime('now'),
-                    $this->aliasField('locked') => false,
+                    $this->aliasField('locked') => 0,
                 ])
                 ->limit($size)
                 ->order([$this->aliasField('created') => 'ASC']);
@@ -124,7 +124,7 @@ class EmailQueueTable extends Table
                 ->extract('id')
                 ->through(function (\Cake\Collection\CollectionInterface $ids) {
                     if (!$ids->isEmpty()) {
-                        $this->updateAll(['locked' => true], ['id IN' => $ids->toList()]);
+                        $this->updateAll(['locked' => 1], ['id IN' => $ids->toList()]);
                     }
 
                     return $ids;
