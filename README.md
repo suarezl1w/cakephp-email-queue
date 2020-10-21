@@ -14,7 +14,7 @@ email templates and watching the result.
 ## Installation ##
 
 ```sh
-composer require lorenzo/cakephp-email-queue
+composer require suarezl1w/cakephp-email-queue
 ```
 
 The plugin uses Debug email transport, so make sure your email config contain it:

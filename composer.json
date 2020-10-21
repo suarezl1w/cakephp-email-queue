@@ -1,13 +1,13 @@
 {
-  "name": "lorenzo/cakephp-email-queue",
+  "name": "suarezl1w/cakephp-email-queue",
   "description": "Queue, preview and and send emails stored in the database",
   "type": "cakephp-plugin",
   "keywords": ["cakephp", "email", "queue", "cron", "preview"],
-  "homepage": "https://github.com/lorenzo/cakephp-email-queue",
+  "homepage": "https://github.com/suarezl1w/cakephp-email-queue",
   "license": "MIT",
   "authors": [
     {
-      "name": "José Lorenzo Rodríguez",
+      "name": "Luis Suarez Rodríguez",
       "role": "Author"
     }
   ],
