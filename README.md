@@ -61,6 +61,8 @@ and queue a new one by storing the correct data:
 - Second arguments is an array of view variables to be passed to the
   email template
 - Third arguments is an array of options, possible options are
+ * `language`: Email's language i18n 
+ * `prefix`: A prefix subject Ex. [App Name]
  * `subject`: Email's subject
  * `send_at`: date time sting representing the time this email should be sent at (in UTC)
  * `template`:  the name of the element to use as template for the email message. (maximum supported length is 100 chars)

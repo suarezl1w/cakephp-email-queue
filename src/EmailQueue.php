@@ -14,6 +14,8 @@ class EmailQueue
      * @param array $data    associative array of variables to be passed to the email template
      * @param array $options list of options for email sending. Possible keys:
      *
+     * - language : Email's language i18n
+     * - prefix : Email's subject Prefix
      * - subject : Email's subject
      * - send_at : date time sting representing the time this email should be sent at (in UTC)
      * - template :  the name of the element to use as template for the email message

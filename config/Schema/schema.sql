@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS `email_queue` (
   `email` varchar(129) NOT NULL,
   `from_name` varchar(255) DEFAULT NULL,
   `from_email` varchar(255) DEFAULT NULL,
+  `language` varchar(125) DEFAULT 'en_US',
+  `prefix` varchar(255) DEFAULT NULL,
   `subject` varchar(255) NOT NULL,
   `config` varchar(30) NOT NULL,
   `template` varchar(50) NOT NULL,

@@ -10,6 +10,7 @@ use Cake\Mailer\Mailer;
 use Cake\Network\Exception\SocketException;
 use Cake\ORM\TableRegistry;
 use EmailQueue\Model\Table\EmailQueueTable;
+use Cake\I18n\I18n;
 
 class SenderShell extends Shell
 {
@@ -91,8 +92,11 @@ class SenderShell extends Shell
         $emailQueue = TableRegistry::getTableLocator()->get('EmailQueue', ['className' => EmailQueueTable::class]);
         $emails = $emailQueue->getBatch($this->params['limit']);
 
+        //\Cake\Log\Log::write('debug', json_encode($emails));
         $count = count($emails);
         foreach ($emails as $e) {
+            $language = $e->config;
+
             $configName = $e->config === 'default' ? $this->params['config'] : $e->config;
             $template = $e->template === 'default' ? $this->params['template'] : $e->template;
             $layout = $e->layout === 'default' ? $this->params['layout'] : $e->layout;
@@ -100,6 +104,10 @@ class SenderShell extends Shell
             $theme = empty($e->theme) ? '' : (string)$e->theme;
             $viewVars = empty($e->template_vars) ? [] : $e->template_vars;
             $errorMessage = null;
+
+            if ($language) {
+                I18n::setLocale($language);
+            }
 
             try {
                 $email = $this->_newEmail($configName);
@@ -119,9 +127,12 @@ class SenderShell extends Shell
                     $email->setAttachments($e->attachments);
                 }
 
+             /*    \Cake\Log\Log::write('debug', json_encode($e->prefix));
+                \Cake\Log\Log::write('debug', $e->subject); */
+
                 $sent = $email
                     ->setTo($e->email)
-                    ->setSubject($e->subject)
+                    ->setSubject($e->prefix . $e->subject)
                     ->setEmailFormat($e->format)
                     ->addHeaders($headers)
                     ->setViewVars($viewVars)

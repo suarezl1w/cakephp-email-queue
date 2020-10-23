@@ -46,6 +46,7 @@ class EmailQueueTest extends TestCase
             'someone@domain.com',
             ['a' => 'variable', 'some' => 'thing'],
             [
+            'prefix' => '[App Name] ',
             'subject' => 'Hey!',
             'headers' => ['X-FOO' => 'bar', 'X-BAZ' => 'thing'],
             ]
@@ -60,6 +61,8 @@ class EmailQueueTest extends TestCase
 
         $expected = [
             'email' => 'someone@domain.com',
+            'language' => 'en_US',
+            'prefix' => '[App Name] ',
             'subject' => 'Hey!',
             'template' => 'default',
             'layout' => 'default',
@@ -80,7 +83,7 @@ class EmailQueueTest extends TestCase
         $this->assertEquals(gmdate('Y-m-d H'), $sendAt->format('Y-m-d H'));
 
         $date = new Time('2019-01-11 11:14:15');
-        $this->EmailQueue->enqueue(['a@example.com', 'b@example.com'], ['a' => 'b'], ['send_at' => $date, 'subject' => 'Hey!']);
+        $this->EmailQueue->enqueue(['a@example.com', 'b@example.com'], ['a' => 'b'], ['send_at' => $date, 'language' => 'en_US', 'prefix' => '[App Name] ', 'subject' => 'Hey!']);
         $this->assertEquals($count + 2, $this->EmailQueue->find()->count());
 
         $email = $this->EmailQueue
@@ -100,7 +103,7 @@ class EmailQueueTest extends TestCase
         $result = $this->EmailQueue->enqueue(
             'c@example.com',
             ['a' => 'c'],
-            ['subject' => 'Hey', 'send_at' => $date, 'config' => 'other', 'template' => 'custom', 'layout' => 'email']
+            ['language' => 'en_US', 'prefix' => '[App Name] ', 'subject' => 'Hey', 'send_at' => $date, 'config' => 'other', 'template' => 'custom', 'layout' => 'email']
         );
         $this->assertTrue($result);
         $email = $this->EmailQueue
@@ -184,7 +187,7 @@ class EmailQueueTest extends TestCase
         $result = EmailQueue::enqueue(
             'c@example.com',
             ['a' => 'c'],
-            ['subject' => 'Hey', 'send_at' => $date, 'config' => 'other', 'template' => 'custom', 'layout' => 'email']
+            ['language' => 'en_US', 'prefix' => '[App Name] ', 'subject' => 'Hey', 'send_at' => $date, 'config' => 'other', 'template' => 'custom', 'layout' => 'email']
         );
         $this->assertTrue($result);
         $email = $this->EmailQueue->find()

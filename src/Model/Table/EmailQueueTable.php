@@ -47,6 +47,8 @@ class EmailQueueTable extends Table
      * @param array $data    associative array of variables to be passed to the email template
      * @param array $options list of options for email sending. Possible keys:
      *
+     * - language : Email's language i18n
+     * - prefix : Email's subject prefix
      * - subject : Email's subject
      * - send_at : date time sting representing the time this email should be sent at (in UTC)
      * - template :  the name of the element to use as template for the email message
@@ -65,6 +67,8 @@ class EmailQueueTable extends Table
         }
 
         $defaults = [
+            'language' => 'en_US',
+            'prefix' => '',
             'subject' => '',
             'send_at' => new FrozenTime('now'),
             'template' => 'default',
@@ -143,7 +147,7 @@ class EmailQueueTable extends Table
      */
     public function releaseLocks($ids): void
     {
-        $this->updateAll(['locked' => false], ['id IN' => $ids]);
+        $this->updateAll(['locked' => 0], ['id IN' => $ids]);
     }
 
     /**
@@ -153,7 +157,7 @@ class EmailQueueTable extends Table
      */
     public function clearLocks(): void
     {
-        $this->updateAll(['locked' => false], '1=1');
+        $this->updateAll(['locked' => 0], '1=1');
     }
 
     /**
@@ -164,7 +168,7 @@ class EmailQueueTable extends Table
      */
     public function success($id): void
     {
-        $this->updateAll(['sent' => true], ['id' => $id]);
+        $this->updateAll(['sent' => 1], ['id' => $id]);
     }
 
     /**

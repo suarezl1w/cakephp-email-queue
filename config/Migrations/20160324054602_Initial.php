@@ -44,6 +44,24 @@ class Initial extends AbstractMigration
                 ]
             )
             ->addColumn(
+                'language',
+                'string',
+                [
+                'default' => 'en_US',
+                'limit' => 125,
+                'null' => false,
+                ]
+            )
+            ->addColumn(
+                'prefix',
+                'string',
+                [
+                'default' => null,
+                'limit' => 255,
+                'null' => true,
+                ]
+            )
+            ->addColumn(
                 'subject',
                 'string',
                 [

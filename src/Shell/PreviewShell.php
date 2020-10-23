@@ -8,6 +8,7 @@ use Cake\Core\Configure;
 use Cake\Mailer\Mailer;
 use Cake\ORM\TableRegistry;
 use EmailQueue\Model\Table\EmailQueueTable;
+use Cake\I18n\I18n;
 
 class PreviewShell extends Shell
 {
@@ -40,7 +41,9 @@ class PreviewShell extends Shell
                 $this->in('Hit a key to continue');
                 $this->clear();
             }
-            $this->out('Email :' . $email['EmailQueue']['id']);
+
+/*             \Cake\Log\Log::write('debug', json_encode($email));
+ */            $this->out('Email :' . $email["id"]);
             $this->preview($email);
         }
     }
@@ -53,6 +56,7 @@ class PreviewShell extends Shell
      */
     public function preview($e)
     {
+        $language = $e['language'];
         $configName = $e['config'];
         $template = $e['template'];
         $layout = $e['layout'];
@@ -61,13 +65,17 @@ class PreviewShell extends Shell
 
         $email = new Mailer($configName);
 
+        if ($language) {
+            I18n::setLocale($language);
+        }
+
         if (!empty($e['attachments'])) {
             $email->setAttachments($e['attachments']);
         }
 
         $email->setTransport('Debug')
             ->setTo($e['email'])
-            ->setSubject($e['subject'])
+            ->setSubject($e['prefix'] . $e['subject'])
             ->setEmailFormat($e['format'])
             ->addHeaders($headers)
             ->setMessageId(false)
@@ -91,7 +99,7 @@ class PreviewShell extends Shell
         $this->hr();
         $this->out('Data:');
         $this->hr();
-        debug($e['template_vars']);
+        //debug($e['template_vars']);
         $this->hr();
         $this->out('');
     }
