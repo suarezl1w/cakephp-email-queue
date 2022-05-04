@@ -125,6 +125,7 @@ class EmailQueueTable extends Table
                 ->order([$this->aliasField('created') => 'ASC']);
 
             $emails
+                ->all()
                 ->extract('id')
                 ->through(function (\Cake\Collection\CollectionInterface $ids) {
                     if (!$ids->isEmpty()) {
@@ -134,7 +135,7 @@ class EmailQueueTable extends Table
                     return $ids;
                 });
 
-            return $emails->toList();
+            return $emails->all()->toList();
         });
     }
 
