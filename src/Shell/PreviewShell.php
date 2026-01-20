@@ -6,7 +6,7 @@ namespace EmailQueue\Shell;
 use Cake\Console\Shell;
 use Cake\Core\Configure;
 use Cake\Mailer\Mailer;
-use Cake\ORM\TableRegistry;
+use Cake\Datasource\FactoryLocator;
 use EmailQueue\Model\Table\EmailQueueTable;
 use Cake\I18n\I18n;
 
@@ -26,7 +26,7 @@ class PreviewShell extends Shell
             $conditions['id IN'] = $this->args;
         }
 
-        $emailQueue = TableRegistry::getTableLocator()->get('EmailQueue', ['className' => EmailQueueTable::class]);
+        $emailQueue = FactoryLocator::get('Table')->get('EmailQueue', ['className' => EmailQueueTable::class]);
         $emails = $emailQueue->find()->where($conditions)->toList();
 
         if (!$emails) {

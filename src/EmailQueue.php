@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace EmailQueue;
 
-use Cake\ORM\TableRegistry;
+use Cake\Datasource\FactoryLocator;
+use Cake\ORM\Locator\TableLocator;
 
 class EmailQueue
 {
@@ -27,9 +28,9 @@ class EmailQueue
      *
      * @return bool
      */
-    public static function enqueue($to, array $data, array $options = [])
+    public static function enqueue($to, array $data, array $options = []): bool
     {
-        return TableRegistry::getTableLocator()
+        return FactoryLocator::get('Table')
             ->get('EmailQueue.EmailQueue')
             ->enqueue($to, $data, $options);
     }

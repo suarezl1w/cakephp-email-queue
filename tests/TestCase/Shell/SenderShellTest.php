@@ -6,8 +6,8 @@ namespace EmailQueue\Test\Shell;
 use Cake\Console\ConsoleIo;
 use Cake\Console\ConsoleOutput;
 use Cake\Mailer\Transport\MailTransport;
-use Cake\Network\Exception\SocketException;
-use Cake\ORM\TableRegistry;
+use Cake\Mailer\Exception\MailerException;
+use Cake\Datasource\FactoryLocator;
 use Cake\TestSuite\ConsoleIntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 use EmailQueue\Model\Table\EmailQueueTable;
@@ -22,33 +22,33 @@ class SenderShellTest extends TestCase
     use ConsoleIntegrationTestTrait;
 
     /**
-     * @var ConsoleOutput
+     * @var ConsoleIo
      */
-    protected $io;
+    protected ConsoleIo $io;
 
     /**
-     * @var MockObject
+     * @var ConsoleOutput|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $out;
 
     /**
-     * @var MockObject
+     * @var SenderShell|\PHPUnit\Framework\MockObject\MockObject
      */
     protected $Sender;
 
     /**
      * Fixtures.
      *
-     * @var array
+     * @var array<string>
      */
-    public $fixtures = [
+    protected array $fixtures = [
         'plugin.EmailQueue.EmailQueue',
     ];
 
     /**
      * @var EmailQueueTable
      */
-    protected $EmailQueue;
+    protected EmailQueueTable $EmailQueue;
 
     /**
      * setUp method.
@@ -58,13 +58,13 @@ class SenderShellTest extends TestCase
         parent::setUp();
         $this->out = new ConsoleOutput();
         $this->out = $this->getMockBuilder(ConsoleOutput::class)
-            ->setMethods(['write'])
+            ->onlyMethods(['write'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->io = new ConsoleIo($this->out, $this->out);
 
         $this->Sender = $this->getMockBuilder(SenderShell::class)
-            ->setMethods(['in', 'createFile', '_stop', '_newEmail'])
+            ->onlyMethods(['in', 'createFile', '_stop', '_newEmail'])
             ->setConstructorArgs([$this->io])
             ->getMock();
 
@@ -76,7 +76,7 @@ class SenderShellTest extends TestCase
             'stagger' => false,
         ];
 
-        $this->EmailQueue = TableRegistry::getTableLocator()
+        $this->EmailQueue = FactoryLocator::get('Table')
             ->get('EmailQueue', ['className' => EmailQueueTable::class]);
     }
 
@@ -94,26 +94,27 @@ class SenderShellTest extends TestCase
 
         $this->Sender->expects($this->exactly(3))
             ->method('_newEmail')
-            ->will($this->returnValue($email));
+            ->willReturn($email);
 
         $this->Sender->main();
 
         $emails = $this->EmailQueue
             ->find()
             ->where(['id IN' => ['email-1', 'email-2', 'email-3']])
+            ->all()
             ->toList();
 
-        $this->assertEquals(1, $emails[0]['send_tries']);
-        $this->assertEquals(2, $emails[1]['send_tries']);
-        $this->assertEquals(3, $emails[2]['send_tries']);
+        $this->assertEquals(1, $emails[0]->send_tries);
+        $this->assertEquals(2, $emails[1]->send_tries);
+        $this->assertEquals(3, $emails[2]->send_tries);
 
-        $this->assertFalse($emails[0]['locked']);
-        $this->assertFalse($emails[1]['locked']);
-        $this->assertFalse($emails[2]['locked']);
+        $this->assertFalse($emails[0]->locked);
+        $this->assertFalse($emails[1]->locked);
+        $this->assertFalse($emails[2]->locked);
 
-        $this->assertTrue($emails[0]['sent']);
-        $this->assertTrue($emails[1]['sent']);
-        $this->assertTrue($emails[2]['sent']);
+        $this->assertTrue($emails[0]->sent);
+        $this->assertTrue($emails[1]->sent);
+        $this->assertTrue($emails[2]->sent);
     }
 
     public function testMainAllFail()
@@ -124,7 +125,8 @@ class SenderShellTest extends TestCase
 
         $transport->expects($this->exactly(3))
             ->method('send')
-            ->will($this->throwException(new SocketException('fail')));
+            ->with($this->anything())
+            ->willThrowException(new MailerException('fail'));
 
         $email = new TestMailer();
         $email->setTo('you@example.com')
@@ -134,32 +136,33 @@ class SenderShellTest extends TestCase
         $this->Sender->expects($this->exactly(3))
             ->method('_newEmail')
             ->with('default')
-            ->will($this->returnValue($email));
+            ->willReturn($email);
 
         $this->Sender->main();
 
         $emails = $this->EmailQueue
             ->find()
             ->where(['id IN' => ['email-1', 'email-2', 'email-3']])
+            ->all()
             ->toList();
 
-        $this->assertEquals(2, $emails[0]['send_tries']);
-        $this->assertEquals(3, $emails[1]['send_tries']);
-        $this->assertEquals(4, $emails[2]['send_tries']);
+        $this->assertEquals(2, $emails[0]->send_tries);
+        $this->assertEquals(3, $emails[1]->send_tries);
+        $this->assertEquals(4, $emails[2]->send_tries);
 
-        $this->assertFalse($emails[0]['locked']);
-        $this->assertFalse($emails[1]['locked']);
-        $this->assertFalse($emails[2]['locked']);
+        $this->assertFalse($emails[0]->locked);
+        $this->assertFalse($emails[1]->locked);
+        $this->assertFalse($emails[2]->locked);
 
-        $this->assertFalse($emails[0]['sent']);
-        $this->assertFalse($emails[1]['sent']);
-        $this->assertFalse($emails[2]['sent']);
+        $this->assertFalse($emails[0]->sent);
+        $this->assertFalse($emails[1]->sent);
+        $this->assertFalse($emails[2]->sent);
     }
 
     public function testClearLocks()
     {
         $this->EmailQueue->getBatch();
         $this->Sender->clearLocks();
-        $this->assertEmpty($this->EmailQueue->findByLocked(true)->toArray());
+        $this->assertEmpty($this->EmailQueue->find()->where(['locked' => true])->all()->toArray());
     }
 }

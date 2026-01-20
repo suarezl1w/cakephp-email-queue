@@ -9,14 +9,14 @@ use Cake\TestSuite\Fixture\TestFixture;
  */
 class EmailQueueFixture extends TestFixture
 {
-    public $table = 'email_queue';
+    public string $table = 'email_queue';
 
     /**
      * Fields.
      *
-     * @var array
+     * @var array<string, mixed>
      */
-    public $fields = [
+    public array $fields = [
         'id' => ['type' => 'uuid', 'null' => false],
         'email' => ['type' => 'string', 'null' => false, 'default' => null, 'length' => 100, 'collate' => 'utf8_general_ci', 'charset' => 'utf8'],
         'from_name' => ['type' => 'string', 'null' => true, 'default' => null, 'length' => 100, 'collate' => 'utf8_general_ci', 'charset' => 'utf8'],
@@ -43,9 +43,9 @@ class EmailQueueFixture extends TestFixture
     /**
      * Records.
      *
-     * @var array
+     * @var array<string, mixed>
      */
-    public $records = [
+    public array $records = [
         [
             'id' => 'email-1',
             'email' => 'example@example.com',

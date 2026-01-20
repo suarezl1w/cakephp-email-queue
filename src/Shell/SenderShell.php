@@ -7,8 +7,8 @@ use Cake\Console\ConsoleOptionParser;
 use Cake\Console\Shell;
 use Cake\Core\Configure;
 use Cake\Mailer\Mailer;
-use Cake\Network\Exception\SocketException;
-use Cake\ORM\TableRegistry;
+use Cake\Mailer\Exception\MailerException;
+use Cake\Datasource\FactoryLocator;
 use EmailQueue\Model\Table\EmailQueueTable;
 use Cake\I18n\I18n;
 
@@ -89,7 +89,7 @@ class SenderShell extends Shell
         }
 
         Configure::write('App.baseUrl', '/');
-        $emailQueue = TableRegistry::getTableLocator()->get('EmailQueue', ['className' => EmailQueueTable::class]);
+        $emailQueue = FactoryLocator::get('Table')->get('EmailQueue', ['className' => EmailQueueTable::class]);
         $emails = $emailQueue->getBatch($this->params['limit']);
 
         //\Cake\Log\Log::write('debug', json_encode($emails));
@@ -145,7 +145,7 @@ class SenderShell extends Shell
                     ->setTemplate($template);
 
                 $email->deliver();
-            } catch (SocketException $exception) {
+            } catch (MailerException $exception) {
                 $this->err($exception->getMessage());
                 $errorMessage = $exception->getMessage();
                 $sent = false;
@@ -172,7 +172,7 @@ class SenderShell extends Shell
      */
     public function clearLocks(): void
     {
-        TableRegistry::getTableLocator()
+        FactoryLocator::get('Table')
             ->get('EmailQueue', ['className' => EmailQueueTable::class])
             ->clearLocks();
     }

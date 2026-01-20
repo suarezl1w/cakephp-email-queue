@@ -3,10 +3,9 @@ declare(strict_types=1);
 
 namespace EmailQueue\Test\Model\Table;
 
-use Cake\I18n\Time;
-use Cake\ORM\TableRegistry;
+use Cake\I18n\DateTime;
+use Cake\Datasource\FactoryLocator;
 use Cake\TestSuite\TestCase;
-use DateTime;
 use EmailQueue\EmailQueue;
 use EmailQueue\Model\Table\EmailQueueTable;
 
@@ -22,7 +21,7 @@ class EmailQueueTest extends TestCase
      *
      * @var array
      */
-    public $fixtures = [
+    protected array $fixtures = [
         'plugin.EmailQueue.EmailQueue',
     ];
 
@@ -32,7 +31,7 @@ class EmailQueueTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->EmailQueue = TableRegistry::getTableLocator()
+        $this->EmailQueue = FactoryLocator::get('Table')
             ->get('EmailQueue', ['className' => EmailQueueTable::class]);
     }
 
@@ -77,12 +76,12 @@ class EmailQueueTest extends TestCase
             'from_name' => null,
             'from_email' => null,
         ];
-        $sendAt = new Time($result['send_at']);
+        $sendAt = new DateTime($result['send_at']);
         unset($result['id'], $result['created'], $result['modified'], $result['send_at']);
         $this->assertEquals($expected, $result);
         $this->assertEquals(gmdate('Y-m-d H'), $sendAt->format('Y-m-d H'));
 
-        $date = new Time('2019-01-11 11:14:15');
+        $date = new DateTime('2019-01-11 11:14:15');
         $this->EmailQueue->enqueue(['a@example.com', 'b@example.com'], ['a' => 'b'], ['send_at' => $date, 'language' => 'en_US', 'prefix' => '[App Name] ', 'subject' => 'Hey!']);
         $this->assertEquals($count + 2, $this->EmailQueue->find()->count());
 

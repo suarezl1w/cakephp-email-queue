@@ -7,7 +7,7 @@ use Cake\Core\Configure;
 use Cake\Database\Expression\QueryExpression;
 use Cake\Database\Schema\TableSchemaInterface;
 use Cake\Database\Type;
-use Cake\I18n\FrozenTime;
+use Cake\I18n\DateTime;
 use Cake\ORM\Table;
 use EmailQueue\Database\Type\JsonType;
 use EmailQueue\Database\Type\SerializeType;
@@ -70,7 +70,7 @@ class EmailQueueTable extends Table
             'language' => 'en_US',
             'prefix' => '',
             'subject' => '',
-            'send_at' => new FrozenTime('now'),
+            'send_at' => new DateTime('now'),
             'template' => 'default',
             'layout' => 'default',
             'theme' => '',
@@ -118,7 +118,7 @@ class EmailQueueTable extends Table
                 ->where([
                     $this->aliasField('sent') => 0,
                     $this->aliasField('send_tries') . ' <=' => 3,
-                    $this->aliasField('send_at') . ' <=' => new FrozenTime('now'),
+                    $this->aliasField('send_at') . ' <=' => new DateTime('now'),
                     $this->aliasField('locked') => 0,
                 ])
                 ->limit($size)
