@@ -5,8 +5,7 @@ namespace EmailQueue\Model\Table;
 
 use Cake\Core\Configure;
 use Cake\Database\Expression\QueryExpression;
-use Cake\Database\Schema\TableSchemaInterface;
-use Cake\Database\Type;
+use Cake\Database\TypeFactory;
 use Cake\I18n\DateTime;
 use Cake\ORM\Table;
 use EmailQueue\Database\Type\JsonType;
@@ -25,8 +24,9 @@ class EmailQueueTable extends Table
      */
     public function initialize(array $config = []): void
     {
-        Type::map('email_queue.json', JsonType::class);
-        Type::map('email_queue.serialize', SerializeType::class);
+        TypeFactory::map('email_queue.json', JsonType::class);
+        TypeFactory::map('email_queue.serialize', SerializeType::class);
+        $this->_setColumnTypes();
         $this->addBehavior(
             'Timestamp',
             [
@@ -62,7 +62,7 @@ class EmailQueueTable extends Table
      */
     public function enqueue($to, array $data, array $options = []): bool
     {
-        if (array_key_exists('template', $options) && strlen($options['template']) > self::MAX_TEMPLATE_LENGTH) {
+        if (array_key_exists('template', $options) && strlen((string)($options['template'] ?? '')) > self::MAX_TEMPLATE_LENGTH) {
             throw new LengthException('`template` length must be less or equal to ' . self::MAX_TEMPLATE_LENGTH);
         }
 
@@ -122,7 +122,7 @@ class EmailQueueTable extends Table
                     $this->aliasField('locked') => 0,
                 ])
                 ->limit($size)
-                ->order([$this->aliasField('created') => 'ASC']);
+                ->orderBy([$this->aliasField('created') => 'ASC']);
 
             $emails
                 ->all()
@@ -193,18 +193,17 @@ class EmailQueueTable extends Table
     }
 
     /**
-     * Sets the column type for template_vars and headers to json.
+     * Sets the column type for template_vars, headers and attachments.
+     * CakePHP 5: _initializeSchema was removed, use getSchema() in initialize().
      *
-     * @param \Cake\Database\Schema\TableSchemaInterface $schema The table description
-     * @return \Cake\Database\Schema\TableSchema
+     * @return void
      */
-    protected function _initializeSchema(TableSchemaInterface $schema): TableSchemaInterface
+    protected function _setColumnTypes(): void
     {
         $type = Configure::read('EmailQueue.serialization_type') ?: 'email_queue.serialize';
+        $schema = $this->getSchema();
         $schema->setColumnType('template_vars', $type);
         $schema->setColumnType('headers', $type);
         $schema->setColumnType('attachments', $type);
-
-        return $schema;
     }
 }
