@@ -10,6 +10,7 @@ use Cake\Console\ConsoleOptionParser;
 use Cake\Core\Configure;
 use Cake\Datasource\FactoryLocator;
 use Cake\I18n\I18n;
+use Cake\Log\Log;
 use Cake\Mailer\Exception\MailerException;
 use Cake\Mailer\Mailer;
 use EmailQueue\Model\Table\EmailQueueTable;
@@ -66,6 +67,10 @@ class SenderCommand extends BaseCommand
                 'short' => 'c',
                 'help' => 'Name of email settings to use as defined in email.php',
                 'default' => 'default',
+            ])
+            ->addOption('verbose', [
+                'help' => 'Enable verbose output (batch details, each email id/to/subject). Use --verbose (CakePHP already uses -v globally).',
+                'boolean' => true,
             ]);
     }
 
@@ -74,18 +79,49 @@ class SenderCommand extends BaseCommand
      */
     public function execute(Arguments $args, ConsoleIo $io): ?int
     {
+        $verbose = (bool)($args->getOption('verbose') ?? false);
+        $log = function (string $msg) use ($io): void {
+            $io->out($msg);
+            Log::info(preg_replace('/<[^>]+>/', '', $msg), ['scope' => ['email_queue']]);
+        };
+
+        if ($verbose) {
+            $log('[EmailQueue] Sender started (verbose mode)');
+        }
+
         $stagger = $args->getOption('stagger');
         if ($stagger) {
+            if ($verbose) {
+                $log('[EmailQueue] Stagger: waiting up to ' . (int)$stagger . 's');
+            }
             sleep((int)random_int(0, (int)$stagger));
         }
 
         Configure::write('App.baseUrl', '/');
         $emailQueue = FactoryLocator::get('Table')->get('EmailQueue', ['className' => EmailQueueTable::class]);
         $limit = (int)$args->getOption('limit');
-        $emails = $emailQueue->getBatch($limit);
 
+        if ($verbose) {
+            $log('[EmailQueue] Fetching batch (limit=' . $limit . ')');
+        }
+
+        $emails = $emailQueue->getBatch($limit);
         $count = count($emails);
+
+        if ($count === 0) {
+            $msg = '[EmailQueue] No emails to send (queue empty or no eligible emails: sent=0, send_tries<=3, send_at<=now, locked=0)';
+            $log($msg);
+            return static::CODE_SUCCESS;
+        }
+
+        $log('[EmailQueue] Found ' . $count . ' email(s) to send');
+        $sentCount = 0;
+        $failCount = 0;
+
         foreach ($emails as $e) {
+            if ($verbose) {
+                $log('[EmailQueue] Processing id=' . $e->id . ' to=' . $e->email . ' subject=' . ($e->prefix ?? '') . ($e->subject ?? ''));
+            }
             $language = $e->config;
 
             $configName = $e->config === 'default' ? $args->getOption('config') : $e->config;
@@ -142,10 +178,12 @@ class SenderCommand extends BaseCommand
 
             if ($sent) {
                 $emailQueue->success($e->id);
-                $io->out('<success>Email ' . $e->id . ' was sent</success>');
+                $sentCount++;
+                $log('<success>Email ' . $e->id . ' was sent</success>');
             } else {
                 $emailQueue->fail($e->id, $errorMessage);
-                $io->out('<error>Email ' . $e->id . ' was not sent</error>');
+                $failCount++;
+                $log('<error>Email ' . $e->id . ' was not sent: ' . ($errorMessage ?? '') . '</error>');
             }
         }
 
@@ -153,6 +191,8 @@ class SenderCommand extends BaseCommand
             $locks = collection($emails)->extract('id')->toList();
             $emailQueue->releaseLocks($locks);
         }
+
+        $log('[EmailQueue] Done. Sent=' . $sentCount . ', Failed=' . $failCount);
 
         return static::CODE_SUCCESS;
     }
